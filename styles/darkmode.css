@@ -1,0 +1,69 @@
+body.dark-mode {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+body.dark-mode .controller {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #444;
+    padding: 20px;
+    border-radius: 10px;
+    height: 320px;
+}
+
+body.dark-mode .section,
+{
+background-color: #2e2e2e;
+color: #ffffff;
+border-color: #333;
+}
+
+body.dark-mode .input-box {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    box-sizing: border-box;
+    border: 1px solid #555;
+    border-radius: 10px;
+    background-color: #3b3b3b;
+    color: #fff;
+}
+
+body.dark-mode .output-box-style {
+    background-color: #444;
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 5px 0;
+    display: inline-block;
+    width: 40%;
+}
+
+body.dark-mode .dropdown,
+body.dark-mode .coordinate-button,
+body.dark-mode .coordinate-button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    box-sizing: border-box;
+    border: 1px solid #555;
+    border-radius: 10px;
+    background-color: #3b3b3b;
+    color: #fff;
+}
+
+body.dark-mode .button-group button,
+body.dark-mode #help-button,
+body.dark-mode #theme-toggle-button {
+    background-color: #444;
+    color: #ffffff;
+}
+
+body.dark-mode .button-group button:hover,
+body.dark-mode #help-button:hover,
+body.dark-mode #theme-toggle-button:hover {
+    background-color: #298ccb;
+}
+

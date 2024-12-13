@@ -1,0 +1,71 @@
+body.light-mode {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+body.light-mode {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode h5,
+body.light-mode h6 {
+    color: #000000;
+    /* Black text color for all headings */
+}
+
+body.light-mode .current-position-output,
+body.light-mode .output-box {
+    background-color: #e0e0e0;
+    /* Light grey color for "Current Position" outputs */
+    color: #000000;
+    height: 350px;
+    overflow-y: auto;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+body.light-mode .controller {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #E0E0E0;
+    padding: 20px;
+    border-radius: 10px;
+    height: 320px;
+}
+
+body.light-mode .manual-jog-underlay,
+body.light-mode .manual-jog {
+    background-color: #e0e0e0;
+    /* Light grey color for the underlay under "Manual Jog" */
+    color: #000000;
+}
+
+body.light-mode .drawn-robot-grid {
+    background-color: rgba(224, 224, 224, 0.6);
+    /* 60% transparency for the grid */
+}
+
+/* Additional adjustments for specific elements if required */
+body.light-mode .section {
+    background-color: #f0f0f0;
+    color: #000000;
+    border-color: #ccc;
+}
+
+body.light-mode .coordinate-button,
+body.light-mode .dropdown {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    box-sizing: border-box;
+    border: 1px solid #555;
+    border-radius: 10px;
+    background-color: #3b3b3b;
+    color: #fff;
+}

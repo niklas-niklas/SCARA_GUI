@@ -1,631 +1,735 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCARA Robot GUI</title>
-<style>
-body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    /* Helvetica Neue as primary font */
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    /* 6 columns layout */
-    grid-template-rows: repeat(3, 1fr) auto;
-    gap: 10px;
-    padding: 10px;
-    font-family: Arial, sans-serif;
-    background-color: #1e1e1e;
-    color: #ffffff;
-}
-body.dark-mode {
-    background-color: #1e1e1e;
-    color: #ffffff;
-}
-	body.dark-mode .controller{
-		display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #444;
-    padding: 20px;
-    border-radius: 10px;
-    height: 320px;
-	}
-body.dark-mode .section, {
-background-color: #2e2e2e;
-color: #ffffff;
-border-color: #333;
-}
-body.dark-mode .input-box {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    box-sizing: border-box;
-    border: 1px solid #555;
-    border-radius: 10px;
-    background-color: #3b3b3b;
-    color: #fff;
-}
-body.dark-mode .output-box-style {
-    background-color: #444;
-    color: #fff;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 5px 0;
-    display: inline-block;
-    width: 40%;
-}
-body.dark-mode .dropdown, body.dark-mode .coordinate-button, body.dark-mode .coordinate-button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    box-sizing: border-box;
-    border: 1px solid #555;
-    border-radius: 10px;
-    background-color: #3b3b3b;
-    color: #fff;
-}
-body.dark-mode .button-group button, body.dark-mode #help-button, body.dark-mode #theme-toggle-button {
-    background-color: #444;
-    color: #ffffff;
-}
-body.dark-mode .button-group button:hover, body.dark-mode #help-button:hover, body.dark-mode #theme-toggle-button:hover {
-    background-color: #298ccb;
-}
-body.light-mode {
-    background-color: #ffffff;
-    color: #000000;
-}
-body.light-mode {
-    background-color: #ffffff;
-    color: #000000;
-}
-body.light-mode h1, body.light-mode h2, body.light-mode h3, body.light-mode h4, body.light-mode h5, body.light-mode h6 {
-    color: #000000; /* Black text color for all headings */
-}
-body.light-mode .current-position-output, body.light-mode .output-box {
-    background-color: #e0e0e0; /* Light grey color for "Current Position" outputs */
-    color: #000000;
-    height: 350px;
-    overflow-y: auto;
-    border-radius: 10px;
-    margin-top: 10px;
-}
-	body.light-mode .controller{
-		display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #E0E0E0;
-    padding: 20px;
-    border-radius: 10px;
-    height: 320px;
-	}
-body.light-mode .manual-jog-underlay, body.light-mode .manual-jog {
-    background-color: #e0e0e0; /* Light grey color for the underlay under "Manual Jog" */
-    color: #000000;
-}
-body.light-mode .drawn-robot-grid {
-    background-color: rgba(224, 224, 224, 0.6); /* 60% transparency for the grid */
-}
-/* Additional adjustments for specific elements if required */
-body.light-mode .section {
-    background-color: #f0f0f0;
-    color: #000000;
-    border-color: #ccc;
-}
-body.light-mode .coordinate-button, body.light-mode .dropdown {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    box-sizing: border-box;
-    border: 1px solid #555;
-    border-radius: 10px;
-    background-color: #3b3b3b;
-    color: #fff;
-}
-.button-group button, #stepsizebutton, #help-button, #theme-toggle-button, .coordinate-button, .dropdown {
-    display: inline-block;
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 5px;
-    border-radius: 10px;
-    padding: 10px;
-    cursor: pointer;
-    text-align: center;
-    font-size: inherit;
-    line-height: normal;
-}
-.section {
-    border: 1px solid #333;
-    padding: 10px;
-    border-radius: 10px;
-    background-color: #2e2e2e;
-}
-.section-plot {
-    height: 700px;
-    background-color: #252525;
-    overflow-y: auto;
-    border-radius: 10px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-.section-plot-content {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.output-box {
-    height: 350px;
-    background-color: #252525;
-    overflow-y: auto;
-    border-radius: 10px;
-    margin-top: 10px;
-}
-.button-group button {
-    display: block;
-    width: 100%;
-    margin-bottom: 5px;
-    background-color: #444;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px;
-    cursor: pointer;
-}
-.button-group button:hover {
-    background-color: #298ccb;
-}
-.advanced-control {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.manual-jog {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-.stepsize-position {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-.coordinate-position {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-.speed-slider {
-    width: 100%;
-    background-color: #444;
-}
-h2, h3 {
-    text-align: center;
-    color: #dcdcdc;
-}
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 34px;
-    height: 20px;
-}
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 20px;
-}
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 12px;
-    width: 12px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-input:checked+.slider {
-    background-color: #298ccb;
-}
-input:checked+.slider:before {
-    transform: translateX(14px);
-}
-.disabled {
-    pointer-events: none;
-    opacity: 0.6;
-}
-.input-box, .dropdown, .coordinate-button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    box-sizing: border-box;
-    border: 1px solid #555;
-    border-radius: 10px;
-    background-color: #3b3b3b;
-    color: #fff;
-}
-.input-box:focus, .dropdown:focus {
-    border-color: #2196F3;
-    outline: none;
-}
-.coordinate-button {
-    background-color: #444;
-    border: none;
-    cursor: pointer;
-    text-align: center;
-}
-.coordinate-button:hover {
-    background-color: #555;
-}
-.controller {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #444;
-    padding: 20px;
-    border-radius: 10px;
-    height: 320px;
-}
-.top-buttons {
-    display: flex;
-    justify-content: space-between;
-    width: 160px;
-    /* Adjusted width to accommodate extra spacing */
-    margin-bottom: 30px;
-}
-.help-button-container {
-    display: flex;
-    justify-content: flex-start;
-    /* Align button to the left */
-    margin-top: 5px;/* Adjust margin as needed */
-}
-#help-button {
-    width: auto;
-    /* Allow button to adjust its width based on content */
-    margin-right: 5px;
-    /* Adjust margin as needed */
-    background-color: #444;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px;
-    cursor: pointer;
-}
-#help-button:hover {
-    background-color: #555;
-}
-.theme-toggle-button-container {
-    display: flex;
-    justify-content: flex-start;
-    /* Align button to the left */
-    margin-top: 5px;/* Adjust margin as needed */
-}
-#theme-toggle-button {
-    width: auto;
-    /* Allow button to adjust its width based on content */
-    margin-right: 5px;
-    /* Adjust margin as needed */
-    background-color: #444;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px;
-    cursor: pointer;
-}
-#theme-toggle-button:hover {
-    background-color: #555;
-}
-.top-buttons div {
-    background-color: #298ccb;
-    width: 70px;
-    /* Changed back to 70px */
-    height: 70px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    font-size: 14px;
-    cursor: pointer;
-}
-.top-buttons div:hover {
-    background-color: #1b608c;
-}
-.jog-wheel {
-    position: relative;
-    width: 140px;
-    height: 140px;
-    border: 25px solid #666;
-    border-radius: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.jog-wheel div {
-    position: absolute;
-    background-color: #298ccb;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-}
-.jog-wheel div:hover {
-    background-color: #1b608c;
-}
-/* Move buttons outwards */
-.up {
-    top: -55px;
-}
-.down {
-    bottom: -55px;
-}
-.left {
-    left: -55px;
-}
-.right {
-    right: -55px;
-}
-.center {
-    background-color: #555;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 14px;
-    cursor: pointer;
-}
-.center:hover {
-    background-color: #298ccb;
-}
-.status-display {
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
-    margin-top: 10px;
-}
-.status-display.green {
-    background-color: green;
-    color: white;
-}
-.status-display.yellow {
-    background-color: yellow;
-    color: black;
-}
-.stepsize-position {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-#stepsizebutton {
-    background-color: #444;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px;
-    cursor: pointer;
-}
-#stepsizebutton:hover {
-    background-color: #298ccb;
-}
-/* Button Styles */
-.button-group button {
-    display: inline-block;
-    width: 100%;
-    box-sizing: border-box;
-    /* Ensure padding and border are included in the width */
-    margin-bottom: 5px;
-    background-color: #444;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px;
-    cursor: pointer;
-    text-align: center;
-    font-size: inherit;
-    line-height: normal;
-}
-.button-group button:hover {
-    background-color: #298ccb;
-}
-/* Hide the actual file input */
-.button-group input[type="file"] {
-    display: none;
-}
-/* Styles for the label to match buttons */
-.button-group label[for="inputFile"] {
-    display: inline-block;
-    width: 100%;
-    margin-bottom: 5px;
-    background-color: #444;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px;
-    cursor: pointer;
-    text-align: center;
-    font-size: inherit;
-    line-height: normal;
-    width: 91%;
-}
-/* Hover effect for the label */
-.button-group label[for="inputFile"]:hover {
-    background-color: #298ccb;/* Match hover background color */
-}
-.output-box-style {
-    background-color: #444;
-    color: #fff;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 5px 0;
-    display: inline-block;
-    width: 40%;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCARA Robot GUI</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr); /* 6 columns layout */
+            grid-template-rows: repeat(3, 1fr) auto;
+            gap: 10px;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+
+        body.dark-mode {
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+
+        body.dark-mode .controller {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #444;
+            padding: 20px;
+            border-radius: 10px;
+            height: 320px;
+        }
+
+        body.dark-mode .section,
+        {
+        background-color: #2e2e2e;
+        color: #ffffff;
+        border-color: #333;
+        }
+
+        body.dark-mode .input-box {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+            border: 1px solid #555;
+            border-radius: 10px;
+            background-color: #3b3b3b;
+            color: #fff;
+        }
+
+        body.dark-mode .output-box-style {
+            background-color: #444;
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 5px 0;
+            display: inline-block;
+            width: 40%;
+        }
+
+        body.dark-mode .dropdown,
+        body.dark-mode .coordinate-button,
+        body.dark-mode .coordinate-button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+            border: 1px solid #555;
+            border-radius: 10px;
+            background-color: #3b3b3b;
+            color: #fff;
+        }
+
+        body.dark-mode .button-group button,
+        body.dark-mode #help-button,
+        body.dark-mode #theme-toggle-button {
+            background-color: #444;
+            color: #ffffff;
+        }
+
+        body.dark-mode .button-group button:hover,
+        body.dark-mode #help-button:hover,
+        body.dark-mode #theme-toggle-button:hover {
+            background-color: #298ccb;
+        }
+
+        body.light-mode {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        body.light-mode {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        body.light-mode h1,
+        body.light-mode h2,
+        body.light-mode h3,
+        body.light-mode h4,
+        body.light-mode h5,
+        body.light-mode h6 {
+            color: #000000;
+            /* Black text color for all headings */
+        }
+
+        body.light-mode .current-position-output,
+        body.light-mode .output-box {
+            background-color: #e0e0e0;
+            /* Light grey color for "Current Position" outputs */
+            color: #000000;
+            height: 350px;
+            overflow-y: auto;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        body.light-mode .controller {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #E0E0E0;
+            padding: 20px;
+            border-radius: 10px;
+            height: 320px;
+        }
+
+        body.light-mode .manual-jog-underlay,
+        body.light-mode .manual-jog {
+            background-color: #e0e0e0;
+            /* Light grey color for the underlay under "Manual Jog" */
+            color: #000000;
+        }
+
+        body.light-mode .drawn-robot-grid {
+            background-color: rgba(224, 224, 224, 0.6);
+            /* 60% transparency for the grid */
+        }
+
+        /* Additional adjustments for specific elements if required */
+        body.light-mode .section {
+            background-color: #f0f0f0;
+            color: #000000;
+            border-color: #ccc;
+        }
+
+        body.light-mode .coordinate-button,
+        body.light-mode .dropdown {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+            border: 1px solid #555;
+            border-radius: 10px;
+            background-color: #3b3b3b;
+            color: #fff;
+        }
+
+        .button-group button,
+        #stepsizebutton,
+        #help-button,
+        #theme-toggle-button,
+        .coordinate-button,
+        .dropdown {
+            display: inline-block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-size: inherit;
+            line-height: normal;
+        }
+
+        .section {
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #2e2e2e;
+        }
+
+        .section-plot {
+            height: 700px;
+            background-color: #252525;
+            overflow-y: auto;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-plot-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .output-box {
+            height: 350px;
+            background-color: #252525;
+            overflow-y: auto;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .button-group button {
+            display: block;
+            width: 100%;
+            margin-bottom: 5px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .button-group button:hover {
+            background-color: #298ccb;
+        }
+
+        .advanced-control {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .manual-jog {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stepsize-position {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .coordinate-position {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .speed-slider {
+            width: 100%;
+            background-color: #444;
+        }
+
+        h2,
+        h3 {
+            text-align: center;
+            color: #dcdcdc;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #298ccb;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(14px);
+        }
+
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .input-box,
+        .dropdown,
+        .coordinate-button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+            border: 1px solid #555;
+            border-radius: 10px;
+            background-color: #3b3b3b;
+            color: #fff;
+        }
+
+        .input-box:focus,
+        .dropdown:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+
+        .coordinate-button {
+            background-color: #444;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .coordinate-button:hover {
+            background-color: #555;
+        }
+
+        .controller {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #444;
+            padding: 20px;
+            border-radius: 10px;
+            height: 320px;
+        }
+
+        .top-buttons {
+            display: flex;
+            justify-content: space-between;
+            width: 160px;
+            /* Adjusted width to accommodate extra spacing */
+            margin-bottom: 30px;
+        }
+
+        .help-button-container {
+            display: flex;
+            justify-content: flex-start;
+            /* Align button to the left */
+            margin-top: 5px;
+            /* Adjust margin as needed */
+        }
+
+        #help-button {
+            width: auto;
+            /* Allow button to adjust its width based on content */
+            margin-right: 5px;
+            /* Adjust margin as needed */
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #help-button:hover {
+            background-color: #555;
+        }
+
+        .theme-toggle-button-container {
+            display: flex;
+            justify-content: flex-start;
+            /* Align button to the left */
+            margin-top: 5px;
+            /* Adjust margin as needed */
+        }
+
+        #theme-toggle-button {
+            width: auto;
+            /* Allow button to adjust its width based on content */
+            margin-right: 5px;
+            /* Adjust margin as needed */
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #theme-toggle-button:hover {
+            background-color: #555;
+        }
+
+        .top-buttons div {
+            background-color: #298ccb;
+            width: 70px;
+            /* Changed back to 70px */
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .top-buttons div:hover {
+            background-color: #1b608c;
+        }
+
+        .jog-wheel {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            border: 25px solid #666;
+            border-radius: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .jog-wheel div {
+            position: absolute;
+            background-color: #298ccb;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .jog-wheel div:hover {
+            background-color: #1b608c;
+        }
+
+        /* Move buttons outwards */
+        .up {
+            top: -55px;
+        }
+
+        .down {
+            bottom: -55px;
+        }
+
+        .left {
+            left: -55px;
+        }
+
+        .right {
+            right: -55px;
+        }
+
+        .center {
+            background-color: #555;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .center:hover {
+            background-color: #298ccb;
+        }
+
+        .status-display {
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .status-display.green {
+            background-color: green;
+            color: white;
+        }
+
+        .status-display.yellow {
+            background-color: yellow;
+            color: black;
+        }
+
+        .stepsize-position {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #stepsizebutton {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #stepsizebutton:hover {
+            background-color: #298ccb;
+        }
+
+        /* Button Styles */
+        .button-group button {
+            display: inline-block;
+            width: 100%;
+            box-sizing: border-box;
+            /* Ensure padding and border are included in the width */
+            margin-bottom: 5px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-size: inherit;
+            line-height: normal;
+        }
+
+        .button-group button:hover {
+            background-color: #298ccb;
+        }
+
+        /* Hide the actual file input */
+        .button-group input[type="file"] {
+            display: none;
+        }
+
+        /* Styles for the label to match buttons */
+        .button-group label[for="inputFile"] {
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 5px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-size: inherit;
+            line-height: normal;
+            width: 91%;
+        }
+
+        /* Hover effect for the label */
+        .button-group label[for="inputFile"]:hover {
+            background-color: #298ccb;
+        }
+
+        .output-box-style {
+            background-color: #444;
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 5px 0;
+            display: inline-block;
+            width: 40%;
+        }
+    </style>
 </head>
 
 <body>
-<!-- Left Top: Line diagram of robot's position -->
-<div class="section section-plot" style="grid-column: 1 / span 3; grid-row: 1 / span 2;">
-  <h2>Robot Position</h2>
-  <div class="section-plot-content">
-    <canvas id="robotCanvas" width="650" height="500"></canvas>
-  </div>
-</div>
+    <!-- Left Top: Line diagram of robot's position -->
+    <div class="section section-plot" style="grid-column: 1 / span 3; grid-row: 1 / span 2;">
+        <h2>Robot Position</h2>
+        <div class="section-plot-content">
+            <canvas id="robotCanvas" width="650" height="500"></canvas>
+        </div>
+    </div>
 
-<!-- Left Bottom: Output box for current status and errors -->
-<div class="section output-box" style="grid-column: 1 / span 3; grid-row: 3 / span 2;">
-  <h2>Status and Errors</h2>
-  <p>Status: <span id="mystatus"></span></p>
-  <div id="current-position">
-    <h3>Current Position</h3>
-    <ul>
-      <div class="output-box-style">X Coordinate: <span id="myX">0</span></div>
-      <div class="output-box-style">Joint 1 Angle: <span id="myang1">0</span></div>
-      <div class="output-box-style">Y Coordinate: <span id="myY">0</span></div>
-      <div class="output-box-style">Joint 2 Angle: <span id="myang2">0</span></div>
-      <div class="output-box-style">Z Coordinate: <span id="myservo_state">0</span></div>
-    </ul>
-  </div>
-</div>
+    <!-- Left Bottom: Output box for current status and errors -->
+    <div class="section output-box" style="grid-column: 1 / span 3; grid-row: 3 / span 2;">
+        <h2>Status and Errors</h2>
+        <p>Status: <span id="mystatus"></span></p>
+        <div id="current-position">
+            <h3>Current Position</h3>
+            <ul>
+                <div class="output-box-style">X Coordinate: <span id="myX">0</span></div>
+                <div class="output-box-style">Joint 1 Angle: <span id="myang1">0</span></div>
+                <div class="output-box-style">Y Coordinate: <span id="myY">0</span></div>
+                <div class="output-box-style">Joint 2 Angle: <span id="myang2">0</span></div>
+                <div class="output-box-style">Z Coordinate: <span id="myservo_state">0</span></div>
+            </ul>
+        </div>
+    </div>
 
-<!-- Help button styled similarly to other buttons -->
-<div class="help-button-container" style="grid-column: 1 / span 3; grid-row: 4 / span 1;">
-  <button id="help-button" title="Press to show instructions." class="button-group">Help</button>
-  <button id="theme-toggle-button" title="Toggle light/dark theme" class="button-group">GUI Theme</button>
-</div>
+    <!-- Help button styled similarly to other buttons -->
+    <div class="help-button-container" style="grid-column: 1 / span 3; grid-row: 4 / span 1;">
+        <button id="help-button" title="Press to show instructions." class="button-group">Help</button>
+        <button id="theme-toggle-button" title="Toggle light/dark theme" class="button-group">GUI Theme</button>
+    </div>
 
-<!-- Middle: Poses, Tasks, Load Program -->
-<div class="section" style="grid-column: 4 / span 1; grid-row: 1 / span 3;">
-  <h2>Poses</h2>
-  <div class="button-group">
-    <button id="zero-pose"
+    <!-- Middle: Poses, Tasks, Load Program -->
+    <div class="section" style="grid-column: 4 / span 1; grid-row: 1 / span 3;">
+        <h2>Poses</h2>
+        <div class="button-group">
+            <button id="zero-pose"
                 title="Moves the Robot to its Zero Position, ie both links in a straight line forward facing."
                 onclick="controller()">Zero</button>
-    <button id="pose-2" title="Moves the Robot to programmed Position 1.">P2</button>
-    <button id="pose-3" title="Moves the Robot to programmed Position 2." onclick="drawRobotArm()">P3</button>
-  </div>
-  <h2>Tasks</h2>
-  <div class="button-group">
-    <button id="home-xy" title="Homes all three axis of the robot." onclick="home()">Home XY</button>
-    <button id="draw-rectangle"
+            <button id="pose-2" title="Moves the Robot to programmed Position 1.">P2</button>
+            <button id="pose-3" title="Moves the Robot to programmed Position 2." onclick="drawRobotArm()">P3</button>
+        </div>
+        <h2>Tasks</h2>
+        <div class="button-group">
+            <button id="home-xy" title="Homes all three axis of the robot." onclick="home()">Home XY</button>
+            <button id="draw-rectangle"
                 title="Draws a pre-programmed rectangle with the dimensions of xx by xx mm starting from XY position."
                 onclick="preset2()">Draw Square</button>
-    <button id="draw-circle"
+            <button id="draw-circle"
                 title="Draws a pre-programmed circle with the diameter of xx mm starting from XY position.">Draw
-    Circle</button>
-  </div>
-  <h2>Load and Run Program</h2>
-  <div class="button-group">
-    <input type="file" id="inputFile"
+                Circle</button>
+        </div>
+        <h2>Load and Run Program</h2>
+        <div class="button-group">
+            <input type="file" id="inputFile"
                 title="Select program of XY fileformat to be loaded into the robot. Press 'Run Program' to exectute."
                 accept=".txt">
-    <label class="upload-button" for="inputFile">Upload Program</label>
-    <button id="run-program" onclick="uploadFile()" title="Exectures the loaded file.">Run Program</button>
-  </div>
-</div>
-<!-- Right: Advanced Control with Manual Jog, Coordinate Position, and Speed -->
-<div class="section advanced-control" style="grid-column: 5 / span 2; grid-row: 1 / span 3;">
-  <h2>Advanced Control</h2>
-  <div class="advanced-control-content">
-    <h3>Manual Jog</h3>
-    <div class="controller">
-      <div class="top-buttons">
-        <div id="jog-z-up" title="Moves Z-Axis (Pen) down." onclick="servoup()">Z UP</div>
-        <div id="jog-z-down" title="Moves Z-Axis (Pen) up." onclick="servodown()">Z DOWN</div>
-      </div>
-      <div class="jog-wheel">
-        <div id="jog-y-pos" title="Moves in Y+ direction at for set incremenet per click." class="up"
-                        onclick="move1()">&#9650;<br />
-          Y+</div>
-        <div id="jog-y-neg" title="Moves in Y- direction at for set incremenet per click." class="down"
-                        onclick="move4()">Y-<br />
-          &#9660;</div>
-        <div id="jog-x-neg" title="Moves in X- direction at for set incremenet per click." class="left"
-                        onclick="move2()">&#9664; X-</div>
-        <div id="jog-x-pos" title="Moves in X+ direction at for set incremenet per click." class="right"
-                        onclick="move3()">X+ &#9654; </div>
-        <div id="jog-stop" title="Stops any movement." class="center" onclick="e_stop()">
-          <div>START/<br />
-            STOP</div>
+            <label class="upload-button" for="inputFile">Upload Program</label>
+            <button id="run-program" onclick="uploadFile()" title="Exectures the loaded file.">Run Program</button>
         </div>
-      </div>
     </div>
-    <div>
-      <h3></h3>
-      <div class="stepsize-position">
-        <label for="stepsize">Stepsize (mm): </label>
-        <input type="number" id="jog_var" min="1" max="50" step="any" value="10" name="stepsize"
+    <!-- Right: Advanced Control with Manual Jog, Coordinate Position, and Speed -->
+    <div class="section advanced-control" style="grid-column: 5 / span 2; grid-row: 1 / span 3;">
+        <h2>Advanced Control</h2>
+        <div class="advanced-control-content">
+            <h3>Manual Jog</h3>
+            <div class="controller">
+                <div class="top-buttons">
+                    <div id="jog-z-up" title="Moves Z-Axis (Pen) down." onclick="servoup()">Z UP</div>
+                    <div id="jog-z-down" title="Moves Z-Axis (Pen) up." onclick="servodown()">Z DOWN</div>
+                </div>
+                <div class="jog-wheel">
+                    <div id="jog-y-pos" title="Moves in Y+ direction at for set incremenet per click." class="up"
+                        onclick="move1()">&#9650;<br />
+                        Y+</div>
+                    <div id="jog-y-neg" title="Moves in Y- direction at for set incremenet per click." class="down"
+                        onclick="move4()">Y-<br />
+                        &#9660;</div>
+                    <div id="jog-x-neg" title="Moves in X- direction at for set incremenet per click." class="left"
+                        onclick="move2()">&#9664; X-</div>
+                    <div id="jog-x-pos" title="Moves in X+ direction at for set incremenet per click." class="right"
+                        onclick="move3()">X+ &#9654; </div>
+                    <div id="jog-stop" title="Stops any movement." class="center" onclick="e_stop()">
+                        <div>START/<br />
+                            STOP</div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3></h3>
+                <div class="stepsize-position">
+                    <label for="stepsize">Stepsize (mm): </label>
+                    <input type="number" id="jog_var" min="1" max="50" step="any" value="10" name="stepsize"
                         class="input-box">
-        <button id="stepsizebutton" title="Confirms stepsize change (10mm Standard)."
+                    <button id="stepsizebutton" title="Confirms stepsize change (10mm Standard)."
                         class="stepsize-position button-group" onclick="vars()">CONFIRM</button>
-      </div>
-    </div>
-    <div>
-      <h3>Speed</h3>
-      <input type="range" id="speedslider" class="speed-slider" min="1" max="100">
-      <span id="speed-value">50</span> </div>
-    <h3>Coordinate Position</h3>
-    <div class="coordinate-position">
-      <div>
-        <label for="armAngle">X Coordinate: </label>
-        <input type="number" id="armAngle" min="0" max="360" step="any" value="0" name="x-coordinate"
+                </div>
+            </div>
+            <div>
+                <h3>Speed</h3>
+                <input type="range" id="speedslider" class="speed-slider" min="1" max="100">
+                <span id="speed-value">50</span>
+            </div>
+            <h3>Coordinate Position</h3>
+            <div class="coordinate-position">
+                <div>
+                    <label for="armAngle">X Coordinate: </label>
+                    <input type="number" id="armAngle" min="0" max="360" step="any" value="0" name="x-coordinate"
                         class="input-box">
-      </div>
-      <div>
-        <label for="lineAngle">Y Coordinate: </label>
-        <input type="number" id="lineAngle" name="y-coordinate" min="0" max="360" step="any" value="0"
+                </div>
+                <div>
+                    <label for="lineAngle">Y Coordinate: </label>
+                    <input type="number" id="lineAngle" name="y-coordinate" min="0" max="360" step="any" value="0"
                         class="input-box">
-      </div>
-      <div>
-        <label for="z-position">Z Position: </label>
-        <select id="z-position" title="Moves Z-Axis (Pen) up or down. CAREFUL, 'DOWN' is enganged."
+                </div>
+                <div>
+                    <label for="z-position">Z Position: </label>
+                    <select id="z-position" title="Moves Z-Axis (Pen) up or down. CAREFUL, 'DOWN' is enganged."
                         name="z-position" class="dropdown">
-          <option value="z-up">Z UP</option>
-          <option value="z-down">Z DOWN</option>
-        </select>
-      </div>
-      <button id="go-to" title="Moves robot to specified coordinates." class="coordinate-button"
+                        <option value="z-up">Z UP</option>
+                        <option value="z-down">Z DOWN</option>
+                    </select>
+                </div>
+                <button id="go-to" title="Moves robot to specified coordinates." class="coordinate-button"
                     onclick="handleMove()">MOVE</button>
-      <div id="z-status" class="status-display green">Z-Axis disengaged.</div>
-    </div>
-    <h3>Angle Position</h3>
-    <div>
-      <label for="angle1-slider">Joint Angle 1</label>
-      <input type="range" id="angle1-slider" class="speed-slider" min="-150" max="150">
-      <span id="angle1-value">0</span> </div>
-    <div>
-      <label for="angle2-slider">Joint Angle 2</label>
-      <input type="range" id="angle2-slider" class="speed-slider" min="-150" max="150">
-      <span id="angle2-value">0</span>
-      <button id="go-to" title="Moves robot to specified coordinates." class="coordinate-button"
+                <div id="z-status" class="status-display green">Z-Axis disengaged.</div>
+            </div>
+            <h3>Angle Position</h3>
+            <div>
+                <label for="angle1-slider">Joint Angle 1</label>
+                <input type="range" id="angle1-slider" class="speed-slider" min="-150" max="150">
+                <span id="angle1-value">0</span>
+            </div>
+            <div>
+                <label for="angle2-slider">Joint Angle 2</label>
+                <input type="range" id="angle2-slider" class="speed-slider" min="-150" max="150">
+                <span id="angle2-value">0</span>
+                <button id="go-to" title="Moves robot to specified coordinates." class="coordinate-button"
                     onclick="drawRobotArm()">MOVE</button>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-<script>
+
+    <script>
         var gateway = `ws://${window.location.hostname}/ws`;
         var websocket;
         var robotDot = null;
@@ -653,7 +757,6 @@ input:checked+.slider:before {
         document.getElementById("myang2").textContent = robotData.joint2;
         document.getElementById("mystatus").textContent = robotData.status;
 
-
         // Z-coordinate status update
         const zPositionDropdown = document.getElementById('z-position');
         const zStatus = document.getElementById('z-status');
@@ -675,8 +778,7 @@ input:checked+.slider:before {
             alert('Help: Use the GUI to control the SCARA Robot. Poses section allows you to move the robot to predefined positions. Tasks section offers specific task commands. Use the Load Program button to load a selected program from the dropdown. In Advanced Control, jog the robot using the directional buttons or manually enter coordinates and move the robot. Adjust the speed with the slider.');
         });
 
-
-        document.getElementById('theme-toggle-button').addEventListener('click', function() {
+        document.getElementById('theme-toggle-button').addEventListener('click', function () {
             const body = document.body;
             if (body.classList.contains('light-mode')) {
                 // Switch to dark mode
@@ -693,7 +795,6 @@ input:checked+.slider:before {
             initWebSocket();
         }
 
-
         function getReadings() {
             websocket.send("getXY");
         }
@@ -705,6 +806,7 @@ input:checked+.slider:before {
             websocket.onclose = onClose;
             websocket.onmessage = onMessage;
         }
+
         function onOpen(event) {
             console.log('Connection opened');
             getReadings();
@@ -721,7 +823,7 @@ input:checked+.slider:before {
                 alert('Please select a file first');
                 return;
             }
-
+            
             const file = input.files[0];
             const reader = new FileReader();
 
@@ -746,8 +848,6 @@ input:checked+.slider:before {
         }
 
         function onMessage(event) {
-
-
             var datatosplit = event.data;
             var datasplit = datatosplit.split(',');
             var ang1 = 0;
@@ -771,32 +871,19 @@ input:checked+.slider:before {
             document.getElementById("mystatus").innerHTML = status;
             // document.getElementById("test").innerHTML = datatosplit;
             movearm();
-
         }
 
-
-
         // Get the arm element
-
         const arm = document.getElementById('arm');
 
         // Get the line element
-
         const line = document.getElementById('line');
 
         // Get the input elements
-
         const armAngleInput = document.getElementById('armAngle');
-
         const lineAngleInput = document.getElementById('lineAngle');
-
         const jog_var = document.getElementById('jog_var');
-
         const speed_var = document.getElementById('speed_var');
-
-
-
-
 
         document.getElementById('angle1-slider').addEventListener('input', function () {
             document.getElementById('angle1-value').textContent = this.value;
@@ -835,7 +922,7 @@ input:checked+.slider:before {
 
             send_back(X, Y);
             drawRobotArm();
-            
+
         }
 
         function handleMove() {
@@ -847,39 +934,28 @@ input:checked+.slider:before {
             }
             rotateLine();
         }
-        
+
         function vars() {
-
             const jog = parseFloat(jog_var.value);
-
             const speed = parseFloat(speed_var.value); // Subtract 90 from line angle
-
-
             send_back_varibles(jog, speed);
-
         }
 
-
         function controller() {
-
             const X = 0;
-
             const Y = 280; // Subtract 90 from line angle
-
-
             send_back(X, Y);
-
         }
 
         function home() {
             websocket.send("home");
         }
 
-        function servoup(){
-        websocket.send("servoup");
+        function servoup() {
+            websocket.send("servoup");
         }
 
-        function servodown(){
+        function servodown() {
             websocket.send("servodown");
         }
 
@@ -914,8 +990,6 @@ input:checked+.slider:before {
             websocket.send("e_stop");
         }
 
-
-
         function send_back(X, Y) {
             websocket.send("values " + X + "," + Y);
         }
@@ -930,34 +1004,23 @@ input:checked+.slider:before {
         }
 
         function movearm() {
-
             const armAngle = ang1 + 90; // Use ang1 for the arm angle
             const lineAngle = ang2 + 90; // Use ang2 for the line angle and subtract 90
 
             arm.style.transform = `rotate(${armAngle}deg)`;
-
             line.style.transform = `rotate(${lineAngle + armAngle}deg)`; // Make line angle relative to arm angle
 
-
-
             // Calculate the position of the line's end point
-
             const armLength = parseFloat(window.getComputedStyle(arm).width);
-
             const armRotation = armAngle * (Math.PI / 180);
-
             const lineX = Math.cos(armRotation) * armLength + arm.offsetLeft;
-
             const lineY = Math.sin(armRotation) * armLength + arm.offsetTop;
 
-
-
             // Set the position of the line
-
             line.style.left = lineX + 'px';
-
             line.style.top = lineY + 'px';
         }
+
         let currentLine = 1;
         let chunkSize = 50;
 
@@ -971,35 +1034,34 @@ input:checked+.slider:before {
             const file = input.files[0];
             const reader = new FileReader();
 
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 const text = event.target.result;
                 const lines = text.split('\n');
 
                 const sendChunk = (startIndex, endIndex) => {
-                const chunk = lines.slice(startIndex, endIndex);
-                chunk.forEach(line => {
-                    sendDataToESP32(currentLine, line);
-                    currentLine++;
-                });
+                    const chunk = lines.slice(startIndex, endIndex);
+                    chunk.forEach(line => {
+                        sendDataToESP32(currentLine, line);
+                        currentLine++;
+                    });
 
-                // Wait for a response from the ESP32 before sending the next chunk
-                websocket.onmessage = function(event) {
-                    if (event.data === "chunk_received") {
-                    if (endIndex < lines.length) {
-                        sendChunk(endIndex, endIndex + chunkSize);
-                    } else {
-                        // All lines sent, update UI or handle completion
-                        console.log("All lines sent!");
-                    }
-                    }
+                    // Wait for a response from the ESP32 before sending the next chunk
+                    websocket.onmessage = function (event) {
+                        if (event.data === "chunk_received") {
+                            if (endIndex < lines.length) {
+                                sendChunk(endIndex, endIndex + chunkSize);
+                            } else {
+                                // All lines sent, update UI or handle completion
+                                console.log("All lines sent!");
+                            }
+                        }
+                    };
                 };
-                };
-
                 sendChunk(0, chunkSize);
             };
 
             reader.readAsText(file);
-            }
+        }
 
         function drawGrid(ctx, canvasWidth, canvasHeight, baseX, baseY, step) {
             ctx.strokeStyle = '#727272';
@@ -1011,7 +1073,6 @@ input:checked+.slider:before {
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, canvasHeight);
                 ctx.stroke();
-
             }
 
             // Draw horizontal grid lines
@@ -1105,12 +1166,14 @@ input:checked+.slider:before {
             // Display "BASE" text under the circle at (0, 0)
             ctx.fillText("BASE", base.x - 25, base.y + 35);
         }
+
         // Placeholder for status updates
         const statusOutput = document.getElementById('status-output');
         function updateStatus(message) {
             statusOutput.innerHTML = message;
         }
-// Function to set up the observer for a specific element
+
+        // Function to set up the observer for a specific element
         function observeElement(id) {
             const targetNode = document.getElementById(id);
             const observer = new MutationObserver((mutationsList, observer) => {
@@ -1123,8 +1186,6 @@ input:checked+.slider:before {
 
             // Configuration of the observer:
             const config = { childList: true };
-
-            // Start observing the target node for configured mutations
             observer.observe(targetNode, config);
         }
 
@@ -1152,6 +1213,7 @@ input:checked+.slider:before {
 
         // Call this function whenever you need to update the current position
         updateCurrentPosition(10, 20, 30, 45, 60); // Example values
+
         // Add event listener for Load Program button
         document.getElementById('load-program').addEventListener('click', () => {
             // Trigger click event on the file input element
@@ -1170,6 +1232,7 @@ input:checked+.slider:before {
                 // Add your code to process the loaded file here
             }
         });
+        
         // Function to display all button titles
         function displayButtonTitles() {
             const buttons = document.querySelectorAll('.button-group button');
@@ -1215,24 +1278,6 @@ input:checked+.slider:before {
             const zPosition = document.getElementById('z-position').value;
             updateStatus(`Going to X: ${xCoordinate}, Y: ${yCoordinate}, Z: ${zPosition}`);
         });
-
-        //    // Placeholder for speed control
-        //    document.getElementById('speedslider').addEventListener('input', (event) => {
-        //        updateStatus(`Speed set to ${event.target.value}`);
-        //        vars();
-        //    });
-
-        // Placeholder for speed control
-        //     document.getElementById('angle1-slider').addEventListener('input', (event) => {
-        //         updateStatus(`Speed set to ${event.target.value}`);
-        //         drawRobotArm();
-        //    });
-
-        // Placeholder for speed control
-        //   document.getElementById('angle2-slider').addEventListener('input', (event) => {
-        //      updateStatus(`Speed set to ${event.target.value}`);
-        //       drawRobotArm();
-        //   });
 
     </script>
 </body>

@@ -237,7 +237,7 @@
             }
         });
 
-        // Initialize WebSocket connection
+        // Initialize WebSocket connection with ESP32
         function onload(event) {
             initWebSocket();
         }
@@ -262,7 +262,38 @@
 
         function onClose(event) {
             console.log('Connection closed');
-            setTimeout(initWebSocket, 2000); // Reattempt connection after 2 seconds
+            // Reattempt connection after 2 seconds
+            setTimeout(initWebSocket, 2000);
+        }
+
+        function readFile() {
+            const input = document.getElementById('fileInput');
+            if (!input.files.length) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const file = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                const text = event.target.result;
+                const lines = text.split('\n');
+                const textContentDiv = document.getElementById('text-content');
+                textContentDiv.innerHTML = '';
+
+                lines.forEach(line => {
+                    const lineElement = document.createElement('p');
+                    lineElement.textContent = line;
+                    textContentDiv.appendChild(lineElement);
+                });
+
+                // Display the text file content in the full-width-box
+                const fullWidthBox = document.getElementById('full-width-box');
+                fullWidthBox.innerHTML = text.replace(/\n/g, '<br>');
+            };
+
+            reader.readAsText(file);
         }
 
         // Process incoming WebSocket messages
@@ -272,7 +303,6 @@
             var ang1 = 0;
             var ang2 = 0;
 
-            // Parse and update robot position and status
             xValue = parseFloat(datasplit[0]);
             yValue = parseFloat(datasplit[1]);
             ang1 = parseFloat(datasplit[2]);
@@ -280,17 +310,141 @@
             servo_state = datasplit[4];
             status = datasplit[5];
 
-            // Update the UI with the new data
             document.getElementById("myX").innerHTML = xValue;
             document.getElementById("myY").innerHTML = yValue;
             document.getElementById("myang1").innerHTML = ang1;
             document.getElementById("myang2").innerHTML = ang2;
             document.getElementById("myservo_state").innerHTML = servo_state;
+
             document.getElementById("mystatus").innerHTML = status;
             movearm();
         }
 
-        // Function to move the robot arm based on current angles
+        // Get the arm element
+        const arm = document.getElementById('arm');
+
+        // Get the line element
+        const line = document.getElementById('line');
+
+        // Get the input elements
+        const armAngleInput = document.getElementById('armAngle');
+        const lineAngleInput = document.getElementById('lineAngle');
+        const jog_var = document.getElementById('jog_var');
+        const speed_var = document.getElementById('speed_var');
+
+        document.getElementById('angle1-slider').addEventListener('input', function () {
+            document.getElementById('angle1-value').textContent = this.value;
+            document.getElementById('myang1').textContent = this.value;
+            ang1 = parseInt(this.value, 10);
+            drawRobotArm();
+            movearm();
+        });
+
+        document.getElementById('angle2-slider').addEventListener('input', function () {
+            document.getElementById('angle2-value').textContent = this.value;
+            document.getElementById('myang2').textContent = this.value;
+            ang2 = parseInt(this.value, 10);
+            drawRobotArm();
+            movearm();
+        });
+
+        document.getElementById('speedslider').addEventListener('input', function () {
+            document.getElementById('speed-value').textContent = this.value;
+            document.getElementById('speed').textContent = this.value;
+            ang2 = parseInt(this.value, 10);
+            movearm();
+            drawRobotArm();
+            vars();
+        });
+
+        // Function to rotate the line for a given angle
+
+        function rotateLine() {
+            const X = parseFloat(armAngleInput.value);
+            const Y = parseFloat(lineAngleInput.value); // Subtract 90 from line angle
+
+            send_back(X, Y);
+            drawRobotArm();
+        }
+
+        function handleMove() {
+            const zPosition = document.getElementById("z-position").value;
+            if (zPosition === "z-up") {
+                servoup();
+            } else if (zPosition === "z-down") {
+                servodown();
+            }
+            rotateLine();
+        }
+
+        function vars() {
+            const jog = parseFloat(jog_var.value);
+            const speed = parseFloat(speed_var.value); // Subtract 90 from line angle
+            send_back_varibles(jog, speed);
+        }
+
+        function controller() {
+            const X = 0;
+            const Y = 280; // Subtract 90 from line angle
+            send_back(X, Y);
+        }
+
+        function home() {
+            websocket.send("home");
+        }
+
+        function servoup() {
+            websocket.send("servoup");
+        }
+
+        function servodown() {
+            websocket.send("servodown");
+        }
+
+        function preset1() {
+            websocket.send("preset1");
+        }
+        function preset2() {
+            websocket.send("preset2");
+        }
+        function preset3() {
+            websocket.send("preset3");
+        }
+        function preset4() {
+            websocket.send("preset4");
+        }
+        function move1() {
+            websocket.send("+Y");
+        }
+        function move2() {
+            websocket.send("-X");
+        }
+        function move3() {
+            websocket.send("+X");
+        }
+        function move4() {
+            websocket.send("-Y");
+        }
+        function clear() {
+            websocket.send("clear");
+        }
+        function e_stop() {
+            websocket.send("e_stop");
+        }
+
+        function send_back(X, Y) {
+            websocket.send("values " + X + "," + Y);
+        }
+
+        function send_back_varibles(jog, speed) {
+            websocket.send("varibles " + jog + "," + speed);
+        }
+
+        function sendDataToESP32(line_num, data) {
+            // Assuming you have a WebSocket connection established
+            websocket.send("file[" + line_num + "] " + data);
+        }
+
         function movearm() {
             const armAngle = ang1 + 90; // Use ang1 for the arm angle
             const lineAngle = ang2 + 90; // Use ang2 for the line angle
@@ -309,9 +463,11 @@
             line.style.top = lineY + 'px';
         }
 
-        // Placeholder function for handling file reading and upload
-        function readFile() {
-            const input = document.getElementById('fileInput');
+        let currentLine = 1;
+        let chunkSize = 50;
+
+        function uploadFile() {
+            const input = document.getElementById('inputFile');
             if (!input.files.length) {
                 alert('Please select a file first');
                 return;
@@ -323,85 +479,65 @@
             reader.onload = function (event) {
                 const text = event.target.result;
                 const lines = text.split('\n');
-                const textContentDiv = document.getElementById('text-content');
-                textContentDiv.innerHTML = '';
 
-                // Display each line of the file
-                lines.forEach(line => {
-                    const lineElement = document.createElement('p');
-                    lineElement.textContent = line;
-                    textContentDiv.appendChild(lineElement);
-                });
+                const sendChunk = (startIndex, endIndex) => {
+                    const chunk = lines.slice(startIndex, endIndex);
+                    chunk.forEach(line => {
+                        sendDataToESP32(currentLine, line);
+                        currentLine++;
+                    });
 
-                // Display the full text content in a separate div
-                const fullWidthBox = document.getElementById('full-width-box');
-                fullWidthBox.innerHTML = text.replace(/\n/g, '<br>');
+                    // Wait for a response from the ESP32 before sending the next chunk
+                    websocket.onmessage = function (event) {
+                        if (event.data === "chunk_received") {
+                            if (endIndex < lines.length) {
+                                sendChunk(endIndex, endIndex + chunkSize);
+                            } else {
+                                // All lines sent, update UI or handle completion
+                                console.log("All lines sent!");
+                            }
+                        }
+                    };
+                };
+                sendChunk(0, chunkSize);
             };
 
             reader.readAsText(file);
         }
 
-        // WebSocket command for moving robot to home position
-        function home() {
-            websocket.send("home");
-        }
+        // Function to draw the grid on the canvas
+        function drawGrid(ctx, canvasWidth, canvasHeight, baseX, baseY, step) {
+            ctx.strokeStyle = '#727272';
+            ctx.lineWidth = 0.5;
 
-        // WebSocket command for specific robot presets
-        function preset1() {
-            websocket.send("preset1");
-        }
+            // Draw vertical grid lines
+            for (let x = baseX % step; x < canvasWidth; x += step) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvasHeight);
+                ctx.stroke();
+            }
 
-        function preset2() {
-            websocket.send("preset2");
-        }
+            // Draw horizontal grid lines
+            for (let y = baseY % step; y < canvasHeight; y += step) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvasWidth, y);
+                ctx.stroke();
+            }
 
-        function preset3() {
-            websocket.send("preset3");
-        }
-
-        function preset4() {
-            websocket.send("preset4");
-        }
-
-        // WebSocket commands for movement
-        function move1() {
-            websocket.send("+Y");
-        }
-
-        function move2() {
-            websocket.send("-X");
-        }
-
-        function move3() {
-            websocket.send("+X");
-        }
-
-        function move4() {
-            websocket.send("-Y");
-        }
-
-        // Additional control functions for stopping or clearing actions
-        function clear() {
-            websocket.send("clear");
-        }
-
-        function e_stop() {
-            websocket.send("e_stop");
-        }
-
-        // Function to send movement data back to the WebSocket
-        function send_back(X, Y) {
-            websocket.send("values " + X + "," + Y);
-        }
-
-        // Function to send variable data back to the WebSocket
-        function send_back_varibles(jog, speed) {
-            websocket.send("varibles " + jog + "," + speed);
-        }
-
-        // Function to send data from a file to the WebSocket
-        function sendDataToESP32(line_num, data) {
-            websocket.send("file[" + line_num + "] " + data);
+            // Draw thicker lines for the zero axes
+            ctx.strokeStyle = '#727272';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(baseX, 0);
+            ctx.lineTo(baseX, canvasHeight);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, baseY);
+            ctx.lineTo(canvasWidth, baseY);
+            ctx.stroke();
+            ctx.lineWidth = 5;
         }
 
         // Function to draw the robot arm and its end effector on canvas
@@ -410,11 +546,9 @@
             const ctx = canvas.getContext('2d');
             const angle1 = document.getElementById("myang1").innerHTML;
             const angle2 = document.getElementById("myang2").innerHTML;
-            const baseX = 325;
-            const baseY = 400;
 
             const length = 140;  // Length of each link in mm
-            const base = { x: baseX, y: baseY };  // Center of the canvas
+            const base = { x: 325, y: 400 };  // Center of the canvas
             const maxrotationAngle = 270;
 
             // Convert angles from degrees to radians, with 0 degrees pointing upwards
@@ -437,35 +571,165 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw the grid
-            drawGrid(ctx, canvas.width, canvas.height, base.x, base.y);
+            drawGrid(ctx, canvas.width, canvas.height, base.x, base.y, 10);
 
-            // Draw the robot arm
+            ctx.strokeStyle = '#298ccb';
+            ctx.fillStyle = '#298ccb';
+
+            // Draw the first link
             ctx.beginPath();
             ctx.moveTo(base.x, base.y);
             ctx.lineTo(joint1.x, joint1.y);
-            ctx.lineTo(joint2.x, joint2.y);
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = '#FF0000';
             ctx.stroke();
-        }
 
-        // Function to draw the grid on the canvas
-        function drawGrid(ctx, width, height, baseX, baseY) {
-            ctx.strokeStyle = "#e0e0e0";
-            ctx.lineWidth = 1;
+            // Draw the second link
             ctx.beginPath();
-            for (let x = 0; x < width; x += 20) {
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-            }
-            for (let y = 0; y < height; y += 20) {
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-            }
+            ctx.moveTo(joint1.x, joint1.y);
+            ctx.lineTo(joint2.x, joint2.y);
             ctx.stroke();
-        }
-    </script>
 
+            // Draw the joints
+            ctx.beginPath();
+            ctx.arc(base.x, base.y, 15, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(joint1.x, joint1.y, 10, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(joint2.x, joint2.y, 10, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.font = "bold 18px Arial";
+            ctx.lineWidth = 3;
+            
+            // Display the end effector's (x, y) position rounded to 2 decimals
+            const endEffectorX = (joint2.x - base.x).toFixed(0);
+            const endEffectorY = (-(joint2.y - base.y)).toFixed(0);
+
+            const offsetEndeffectorTextX = 10;
+            const offsetEndeffectorTextY = -10;
+
+            ctx.fillText(`(${endEffectorX}, ${endEffectorY})`, joint2.x + offsetEndeffectorTextX, joint2.y - offsetEndeffectorTextY);
+
+            const offsetTextX = -25;
+            const offsetTextY = 35;
+            // Display "BASE" text under the circle at (0, 0)
+            ctx.fillText("BASE", base.x - offsetTextX, base.y + offsetTextY);
+        }
+
+        // Placeholder for status updates
+        const statusOutput = document.getElementById('status-output');
+        function updateStatus(message) {
+            statusOutput.innerHTML = message;
+        }
+
+        // Function to set up the observer for a specific element
+        function observeElement(id) {
+            const targetNode = document.getElementById(id);
+            const observer = new MutationObserver((mutationsList, observer) => {
+                for (let mutation of mutationsList) {
+                    if (mutation.type === 'childList') {
+                        drawRobotArm();
+                    }
+                }
+            });
+
+            // Configuration of the observer:
+            const config = { childList: true };
+            observer.observe(targetNode, config);
+        }
+
+        // Set up observers for both elements
+        observeElement("myang1");
+        observeElement("myang2");
+
+        // Add event listeners for buttons
+        document.getElementById('zero-pose').addEventListener('click', () => updateStatus('Moving to Zero pose...'));
+        document.getElementById('pose-2').addEventListener('click', () => updateStatus('Moving to P2...'));
+        document.getElementById('pose-3').addEventListener('click', () => updateStatus('Moving to P3...'));
+        document.getElementById('draw-rectangle').addEventListener('click', () => updateStatus('Drawing Rectangle...'));
+        document.getElementById('draw-circle').addEventListener('click', () => updateStatus('Drawing Circle...'));
+        document.getElementById('home-xy').addEventListener('click', () => updateStatus('Moving to Home XY...'));
+        document.getElementById('load-program').addEventListener('click', () => updateStatus('Loading Program...'));
+        document.getElementById('run-program').addEventListener('click', () => updateStatus('Running Program...'));
+
+        // Placeholder for updating current position
+        function updateCurrentPosition(x, y, z, joint1, joint2) {
+            document.getElementById('current-x').textContent = x;
+            document.getElementById('current-y').textContent = y;
+            document.getElementById('current-z').textContent = z;
+            document.getElementById('current-joint-1').textContent = joint1;
+            document.getElementById('current-joint-2').textContent = joint2;
+        }
+
+        // Add event listener for Load Program button
+        document.getElementById('load-program').addEventListener('click', () => {
+            // Trigger click event on the file input element
+            document.getElementById('file-input').click();
+        });
+
+        // Add event listener for Run Program button
+        document.getElementById('run-program').addEventListener('click', () => updateStatus('Running Program...'));
+
+        // Add event listener for file input change
+        document.getElementById('file-input').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                // Handle the loaded file
+                updateStatus(`Loading Program: ${file.name}`);
+                // Add your code to process the loaded file here
+            }
+        });
+
+        // Function to display all button titles
+        function displayButtonTitles() {
+            const buttons = document.querySelectorAll('.button-group button');
+            let titles = '';
+            buttons.forEach(button => {
+                titles += `${button.textContent}: ${button.getAttribute('title')}\n`;
+            });
+            alert(titles);
+        }
+
+        // Event listener for the Help button
+        document.getElementById('help-button').addEventListener('click', displayButtonTitles);
+
+        // Advanced control toggles and manual jog
+        document.getElementById('advanced-toggle').addEventListener('change', (event) => {
+            const advancedControlContent = document.querySelector('.advanced-control-content');
+            if (event.target.checked) {
+                advancedControlContent.classList.remove('disabled');
+            } else {
+                advancedControlContent.classList.add('disabled');
+            }
+        });
+
+        const jogButtons = {
+            'jog-z-up': 'Z UP',
+            'jog-z-down': 'Z DOWN',
+            'jog-y-pos': 'Y+',
+            'jog-y-neg': 'Y-',
+            'jog-x-neg': 'X-',
+            'jog-x-pos': 'X+',
+            'jog-stop': 'STOP'
+        };
+
+        for (let [id, label] of Object.entries(jogButtons)) {
+            document.getElementById(id).addEventListener('click', () => updateStatus(`Jogging ${label}...`));
+        }
+
+        // Coordinate Position 'GO TO' button
+        const goToButton = document.getElementById('go-to');
+        goToButton.addEventListener('click', () => {
+            const xCoordinate = document.getElementById('x-coordinate').value;
+            const yCoordinate = document.getElementById('y-coordinate').value;
+            const zPosition = document.getElementById('z-position').value;
+            updateStatus(`Going to X: ${xCoordinate}, Y: ${yCoordinate}, Z: ${zPosition}`);
+        });
+
+    </script>
 </body>
 
 </html>

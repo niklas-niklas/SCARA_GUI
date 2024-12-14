@@ -284,8 +284,6 @@
             servo_state = datasplit[4];
             status = datasplit[5];
 
-            // updateRobotPosition(ang1, ang2);
-            // addCord(xValue, yValue, '#0000ff');
             document.getElementById("myX").innerHTML = xValue;
             document.getElementById("myY").innerHTML = yValue;
             document.getElementById("myang1").innerHTML = ang1;
@@ -335,18 +333,15 @@
             drawRobotArm();
             vars();
         });
+        
         // Function to rotate the line for a given angle
 
         function rotateLine() {
-
             const X = parseFloat(armAngleInput.value);
-
             const Y = parseFloat(lineAngleInput.value); // Subtract 90 from line angle
-
 
             send_back(X, Y);
             drawRobotArm();
-
         }
 
         function handleMove() {
@@ -529,9 +524,10 @@
 
             const length = 140;  // length of each link in mm
             const base = { x: 325, y: 400 };  // center of the canvas
+            const maxrotationAngle = 270;
 
             // Convert angles from degrees to radians, with 0 degrees pointing upwards
-            const angle1Rad = (angle1 - 270) * (Math.PI / 180);
+            const angle1Rad = (angle1 - maxrotationAngle);
             const angle2Rad = (angle2 - 180) * (Math.PI / 180);
 
             // Calculate the position of the first joint
@@ -585,10 +581,16 @@
             // Display the end effector's (x, y) position rounded to 2 decimals
             const endEffectorX = (joint2.x - base.x).toFixed(0);
             const endEffectorY = (-(joint2.y - base.y)).toFixed(0);
-            ctx.fillText(`(${endEffectorX}, ${endEffectorY})`, joint2.x + 10, joint2.y - 10);
 
+            const offsetEndeffectorTextX = 10;
+            const offsetEndeffectorTextY = -10;
+
+            ctx.fillText(`(${endEffectorX}, ${endEffectorY})`, joint2.x + offsetEndeffectorTextX, joint2.y - offsetEndeffectorTextY);
+
+            const offsetTextX = -25;
+            const offsetTextY = 35;
             // Display "BASE" text under the circle at (0, 0)
-            ctx.fillText("BASE", base.x - 25, base.y + 35);
+            ctx.fillText("BASE", base.x - offsetTextX, base.y + offsetTextY);
         }
 
         // Placeholder for status updates
@@ -626,6 +628,7 @@
         document.getElementById('home-xy').addEventListener('click', () => updateStatus('Moving to Home XY...'));
         document.getElementById('load-program').addEventListener('click', () => updateStatus('Loading Program...'));
         document.getElementById('run-program').addEventListener('click', () => updateStatus('Running Program...'));
+        
         // Placeholder for updating current position
         function updateCurrentPosition(x, y, z, joint1, joint2) {
             document.getElementById('current-x').textContent = x;
@@ -634,9 +637,6 @@
             document.getElementById('current-joint-1').textContent = joint1;
             document.getElementById('current-joint-2').textContent = joint2;
         }
-
-        // Call this function whenever you need to update the current position
-        updateCurrentPosition(10, 20, 30, 45, 60); // Example values
 
         // Add event listener for Load Program button
         document.getElementById('load-program').addEventListener('click', () => {

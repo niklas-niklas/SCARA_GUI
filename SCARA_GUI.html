@@ -276,12 +276,14 @@
             const file = input.files[0];
             const reader = new FileReader();
 
+            // When the file is loaded, process its content
             reader.onload = function (event) {
                 const text = event.target.result;
                 const lines = text.split('\n');
                 const textContentDiv = document.getElementById('text-content');
                 textContentDiv.innerHTML = '';
 
+                // Create <p> elements for each line and append them
                 lines.forEach(line => {
                     const lineElement = document.createElement('p');
                     lineElement.textContent = line;
@@ -332,6 +334,7 @@
         const jog_var = document.getElementById('jog_var');
         const speed_var = document.getElementById('speed_var');
 
+        // Slider to adjust the angle of joint 1
         document.getElementById('angle1-slider').addEventListener('input', function () {
             document.getElementById('angle1-value').textContent = this.value;
             document.getElementById('myang1').textContent = this.value;
@@ -340,6 +343,7 @@
             movearm();
         });
 
+        // Slider to adjust the angle of joint 2
         document.getElementById('angle2-slider').addEventListener('input', function () {
             document.getElementById('angle2-value').textContent = this.value;
             document.getElementById('myang2').textContent = this.value;
@@ -348,6 +352,7 @@
             movearm();
         });
 
+        // Slider to adjust the speed of the robot movement
         document.getElementById('speedslider').addEventListener('input', function () {
             document.getElementById('speed-value').textContent = this.value;
             document.getElementById('speed').textContent = this.value;
@@ -358,15 +363,15 @@
         });
 
         // Function to rotate the line for a given angle
-
         function rotateLine() {
             const X = parseFloat(armAngleInput.value);
-            const Y = parseFloat(lineAngleInput.value); // Subtract 90 from line angle
+            const Y = parseFloat(lineAngleInput.value);
 
             send_back(X, Y);
             drawRobotArm();
         }
 
+        // Function to move Z-axis up or down
         function handleMove() {
             const zPosition = document.getElementById("z-position").value;
             if (zPosition === "z-up") {
@@ -377,15 +382,17 @@
             rotateLine();
         }
 
+        // Retrieves and sends jog and speed values
         function vars() {
             const jog = parseFloat(jog_var.value);
-            const speed = parseFloat(speed_var.value); // Subtract 90 from line angle
+            const speed = parseFloat(speed_var.value);
             send_back_varibles(jog, speed);
         }
 
+        // Sends predefined X and Y coordinates
         function controller() {
             const X = 0;
-            const Y = 280; // Subtract 90 from line angle
+            const Y = 280;
             send_back(X, Y);
         }
 
@@ -441,7 +448,7 @@
         }
 
         function sendDataToESP32(line_num, data) {
-            // Assuming you have a WebSocket connection established
+            // Assuming a WebSocket connection has been established
             websocket.send("file[" + line_num + "] " + data);
         }
 
@@ -603,7 +610,7 @@
 
             ctx.font = "bold 18px Arial";
             ctx.lineWidth = 3;
-            
+
             // Display the end effector's (x, y) position rounded to 2 decimals
             const endEffectorX = (joint2.x - base.x).toFixed(0);
             const endEffectorY = (-(joint2.y - base.y)).toFixed(0);
